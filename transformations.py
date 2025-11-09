@@ -1,7 +1,7 @@
 from ortools.sat.python import cp_model
 import numpy as np
 
-from classes import Point
+from classes import Point, Block
 
 grid_size = 3
 
@@ -10,9 +10,12 @@ blocks = {
     'line':{(0,0),(0,1),(0,2)}
 }
 
-def transform(point: Point, 
+def transform_point(point: Point, 
               rotation: int, 
               flipped: bool) -> Point:
+    """Takes a point, and rotates it 'rotation' quarters anti-clockwise around the origin.
+    Also negates the x co-ordinate of the point if flipped is True.
+    """
 
     theta = rotation * np.pi / 2
     flip = -1 if flipped else 1
@@ -23,36 +26,48 @@ def transform(point: Point,
     new_point = Point((new_x, new_y))
     return new_point
 
-def transform_block(points: list[Point], 
+def transform_block(block: Block, 
                   rotation: int, 
-                  flipped=False) -> list[Point]:
+                  flipped=False) -> Block:
+    """Takes a block, and rotates it 'rotation' quarters anti-clockwise around the origin.
+    Also flips the block across x=0 if flipped is True.
+    """
 
-    new_points = [transform(p, rotation, flipped) for p in points]
+    new_points = Block([transform_point(point, rotation, flipped) for point in block.points])
     return new_points
 
-def centre_block(points: list[Point]) -> list[Point]:
+def centre_block(block: Block) -> Block:
 
-    min_x = min([p.x for p in points])
-    min_y = min([p.y for p in points])
+    min_x = min([point.x for point in block.points])
+    min_y = min([point.y for point in block.points])
 
-    new_points = [(p.x-min_x, p.y-min_y) for p in points]
+    new_points = Block([(point.x-min_x, point.y-min_y) for point in block.points])
     return new_points
 
-def get_all(points: list[Point]) -> list[list[Point]]:
+def unique_blocks(list_of_blocks: list[Block]) -> list[Block]:
 
-    all_transformations = set()
+    unique_points = set({frozenset(block.points) for block in list_of_blocks})
+    unique_blocks = [Block(p) for p in unique_points]
+
+    return unique_blocks
+
+def unique_block_transformations(block: Block) -> list[Block]:
+
+    all_transformations = list()
 
     for flipped in [True,False]:
         for rotation in range(4):
-            new_points = transform_block(points, rotation, flipped)
-            new_points = centre_block(new_points)
-            all_transformations.add(frozenset(new_points))
+            new_block = transform_block(block, rotation, flipped)
+            new_block = centre_block(new_block)
+            all_transformations.append(new_block)
 
-    all_transformations = [list(t) for t in all_transformations]
+    unique_transformations = unique_blocks(all_transformations)
 
-    return all_transformations
+    return unique_transformations
 
-points = [(0,0),(1,0),(0,1)]
-points = [Point(p) for p in points]
-for x in get_all(points):
-    print(x)
+co_ords = [(0,0),(1,0),(0,1)]
+block = Block([Point(p) for p in co_ords])
+all_blocks = unique_block_transformations(block)
+
+for a in all_blocks:
+    print(a)
