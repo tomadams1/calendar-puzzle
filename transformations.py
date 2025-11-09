@@ -37,7 +37,7 @@ def centre_block(points: list[tuple[int,int]]) -> list[tuple[int,int]]:
     new_points = [(p[0]-min_x, p[1]-min_y) for p in points]
     return new_points
 
-def get_all(points: list[tuple[int,int]]) -> list[list[tuple[int,int]]]:
+def get_all(points: list[tuple[int,int]]) -> set[frozenset[tuple[int,int]]]:
 
     all_transformations = set()
 
@@ -50,7 +50,7 @@ def get_all(points: list[tuple[int,int]]) -> list[list[tuple[int,int]]]:
     return all_transformations
 
 all = (get_all(
-    ((0,0),(0,1),(0,2))
+    ((1,1),(0,1),(2,1),(1,2),(1,0))
     ))
 
 for a in all:
