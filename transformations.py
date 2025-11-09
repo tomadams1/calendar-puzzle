@@ -1,6 +1,8 @@
 from ortools.sat.python import cp_model
 import numpy as np
 
+from classes import Point
+
 grid_size = 3
 
 blocks = {
@@ -8,36 +10,35 @@ blocks = {
     'line':{(0,0),(0,1),(0,2)}
 }
 
-def transform(point: tuple[int,int], 
+def transform(point: Point, 
               rotation: int, 
-              flipped: bool) -> tuple[int,int]:
+              flipped: bool) -> Point:
 
-    x,y = point[0],point[1]
     theta = rotation * np.pi / 2
     flip = -1 if flipped else 1
 
-    new_x = np.rint(flip * (x * np.cos(theta) - y * np.sin(theta)))
-    new_y = np.rint(x * np.sin(theta) + y * np.cos(theta))
+    new_x = np.rint(flip * (point.x * np.cos(theta) - point.y * np.sin(theta)))
+    new_y = np.rint(point.x * np.sin(theta) + point.y * np.cos(theta))
 
-    new_point = (new_x, new_y)
+    new_point = Point((new_x, new_y))
     return new_point
 
-def transform_block(points: list[tuple[int,int]], 
+def transform_block(points: list[Point], 
                   rotation: int, 
-                  flipped=False) -> list[tuple[int,int]]:
+                  flipped=False) -> list[Point]:
 
     new_points = [transform(p, rotation, flipped) for p in points]
     return new_points
 
-def centre_block(points: list[tuple[int,int]]) -> list[tuple[int,int]]:
+def centre_block(points: list[Point]) -> list[Point]:
 
-    min_x = min([p[0] for p in points])
-    min_y = min([p[1] for p in points])
+    min_x = min([p.x for p in points])
+    min_y = min([p.y for p in points])
 
-    new_points = [(p[0]-min_x, p[1]-min_y) for p in points]
+    new_points = [(p.x-min_x, p.y-min_y) for p in points]
     return new_points
 
-def get_all(points: list[tuple[int,int]]) -> set[frozenset[tuple[int,int]]]:
+def get_all(points: list[Point]) -> list[list[Point]]:
 
     all_transformations = set()
 
@@ -47,11 +48,11 @@ def get_all(points: list[tuple[int,int]]) -> set[frozenset[tuple[int,int]]]:
             new_points = centre_block(new_points)
             all_transformations.add(frozenset(new_points))
 
+    all_transformations = [list(t) for t in all_transformations]
+
     return all_transformations
 
-all = (get_all(
-    ((1,1),(0,1),(2,1),(1,2),(1,0))
-    ))
-
-for a in all:
-    print(a)
+points = [(0,0),(1,0),(0,1)]
+points = [Point(p) for p in points]
+for x in get_all(points):
+    print(x)
