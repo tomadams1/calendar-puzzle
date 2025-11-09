@@ -20,10 +20,10 @@ def transform_point(point: Point,
     theta = rotation * np.pi / 2
     flip = -1 if flipped else 1
 
-    new_x = np.rint(flip * (point.x * np.cos(theta) - point.y * np.sin(theta)))
-    new_y = np.rint(point.x * np.sin(theta) + point.y * np.cos(theta))
-
+    new_x = int(np.rint(flip * (point.x * np.cos(theta) - point.y * np.sin(theta))))
+    new_y = int(np.rint(point.x * np.sin(theta) + point.y * np.cos(theta)))
     new_point = Point((new_x, new_y))
+
     return new_point
 
 def transform_block(block: Block, 
@@ -36,19 +36,12 @@ def transform_block(block: Block,
     new_points = Block([transform_point(point, rotation, flipped) for point in block.points])
     return new_points
 
-def centre_block(block: Block) -> Block:
-
-    min_x = min([point.x for point in block.points])
-    min_y = min([point.y for point in block.points])
-
-    new_points = Block([(point.x-min_x, point.y-min_y) for point in block.points])
-    return new_points
-
 def unique_blocks(list_of_blocks: list[Block]) -> list[Block]:
 
-    unique_points = set({frozenset(block.points) for block in list_of_blocks})
-    unique_blocks = [Block(p) for p in unique_points]
-
+    unique_blocks = {frozenset([(p.x,p.y) for p in block.points]) for block in list_of_blocks}
+    # for u in unique_points:
+    #     print(u)
+    unique_blocks = [Block([Point((q[0], q[1])) for q in p]) for p in unique_blocks]
     return unique_blocks
 
 def unique_block_transformations(block: Block) -> list[Block]:
@@ -58,7 +51,6 @@ def unique_block_transformations(block: Block) -> list[Block]:
     for flipped in [True,False]:
         for rotation in range(4):
             new_block = transform_block(block, rotation, flipped)
-            new_block = centre_block(new_block)
             all_transformations.append(new_block)
 
     unique_transformations = unique_blocks(all_transformations)
