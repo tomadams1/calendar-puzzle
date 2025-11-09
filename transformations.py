@@ -30,36 +30,36 @@ def transform_block(block: Block,
                   rotation: int, 
                   flipped=False) -> Block:
     """Takes a block, and rotates it 'rotation' quarters anti-clockwise around the origin.
-    Also flips the block across x=0 if flipped is True.
+    Also flips the block horizontally if flipped is True.
     """
 
-    new_points = Block([transform_point(point, rotation, flipped) for point in block.points])
-    return new_points
+    new_block = Block({transform_point(point, rotation, flipped) for point in block.points})
+    return new_block
 
-def unique_blocks(list_of_blocks: list[Block]) -> list[Block]:
+def centre_block(block: Block) -> Block:
 
-    unique_blocks = {frozenset([(p.x,p.y) for p in block.points]) for block in list_of_blocks}
-    # for u in unique_points:
-    #     print(u)
-    unique_blocks = [Block([Point((q[0], q[1])) for q in p]) for p in unique_blocks]
-    return unique_blocks
+    min_x = min([point.x for point in block.points])
+    min_y = min([point.y for point in block.points])
 
-def unique_block_transformations(block: Block) -> list[Block]:
+    new_block = Block([Point((point.x-min_x, point.y-min_y)) for point in block.points])
+    return new_block
+
+def unique_block_transformations(block: Block) -> set[Block]:
 
     all_transformations = list()
 
     for flipped in [True,False]:
         for rotation in range(4):
             new_block = transform_block(block, rotation, flipped)
+            new_block = centre_block(new_block)
             all_transformations.append(new_block)
 
-    unique_transformations = unique_blocks(all_transformations)
+    unique_transformations = set(all_transformations)
 
     return unique_transformations
 
 co_ords = [(0,0),(1,0),(0,1)]
 block = Block([Point(p) for p in co_ords])
 all_blocks = unique_block_transformations(block)
-
 for a in all_blocks:
     print(a)

@@ -12,14 +12,16 @@ class Point:
     def __eq__(self,other):
         return (self.x==other.x) and (self.y==other.y)
     
+    def __hash__(self):
+        return hash((self.x,self.y))
+    
 
 class Block:
     "A set of several points."
 
     def __init__(self, points: set[Point]):
 
-        self.points = points
-        self.centre()
+        self.points = frozenset(points)
 
     def __repr__(self):
 
@@ -28,13 +30,10 @@ class Block:
 
         return f"[{','.join(list_of_points)}]"
 
-    def centre(self):
-
-        min_x = min([point.x for point in self.points])
-        min_y = min([point.y for point in self.points])
-
-        self.points = [Point((point.x-min_x, point.y-min_y)) for point in self.points]
-
     def __eq__(self,other):
 
-        return self.points = other.points
+        return self.points == other.points
+    
+    def __hash__(self):
+
+        return hash(self.points)
