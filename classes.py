@@ -15,6 +15,7 @@ class Point:
     def __hash__(self):
         return hash((self.x,self.y))
 
+
 class Block:
     "A frozen set of several points."
 
