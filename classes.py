@@ -14,10 +14,9 @@ class Point:
     
     def __hash__(self):
         return hash((self.x,self.y))
-    
 
 class Block:
-    "A set of several points."
+    "A frozen set of several points."
 
     def __init__(self, points: set[Point]):
 

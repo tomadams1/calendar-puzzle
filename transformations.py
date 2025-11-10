@@ -44,21 +44,21 @@ def centre_block(block: Block) -> Block:
     new_block = Block([Point((point.x-min_x, point.y-min_y)) for point in block.points])
     return new_block
 
-def unique_block_transformations(block: Block) -> set[Block]:
+def unique_block_transformations(block: Block) -> list[Block]:
 
-    all_transformations = list()
+    unique_transformations = set()
 
     for flipped in [True,False]:
         for rotation in range(4):
             new_block = transform_block(block, rotation, flipped)
             new_block = centre_block(new_block)
-            all_transformations.append(new_block)
+            unique_transformations.add(new_block)
 
-    unique_transformations = set(all_transformations)
+    unique_transformations = list(unique_transformations)
 
     return unique_transformations
 
-co_ords = [(0,0),(1,0),(0,1)]
+co_ords = [(0,0),(1,0),(0,1),(1,1)]
 block = Block([Point(p) for p in co_ords])
 all_blocks = unique_block_transformations(block)
 for a in all_blocks:
