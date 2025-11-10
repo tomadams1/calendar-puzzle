@@ -30,13 +30,14 @@ for b, list_of_transforms in transformations.items():
 all_squares = {}
 for x in range(grid_x):
     for y in range(grid_y):
-        all_squares[(x,y)] = model.new_int_var(f'{x}_{y}')
+        all_squares[(x,y)] = model.new_int_var(0, len(transformations), f'{x}_{y}')
         model.add(all_squares[(x,y)] == 1)
 
 # Each block can only have one position and transformation
 for block_name in transformations:
 
-    block_choices = [c for c in all_blocks if c[0] == block_name]
+    block_choices = [value for key,value in all_blocks.items() if key[0] == block_name]
+    print(block_choices)
     model.add_exactly_one(block_choices)
 
 # Each square has the value of the number of blocks that are lying on it
@@ -60,5 +61,18 @@ for sq_x in range(grid_x):
 
         model.add(all_squares[sq_x,sq_y] == sum(pointing_at_square))
 
+solver = cp_model.CpSolver()
 solution_printer = cp_model.ObjectiveSolutionPrinter()
 status = solver.solve(model, solution_printer)
+
+for block in blocks:
+
+    all_matches = {key:value for key,value in all_blocks.items() if (key[0] == block)}
+
+    for key,value in all_matches.items():
+
+        if solver.boolean_value(value):
+
+            print(key[0])
+            print(transformations[block][key[1]])
+            print(key[2],key[3])
