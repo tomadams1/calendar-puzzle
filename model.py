@@ -73,6 +73,5 @@ for block in blocks:
 
         if solver.boolean_value(value):
 
-            print(key[0])
+            print(f'Place {key[0]} at position ({key[2]},{key[3]})')
             print(transformations[block][key[1]])
-            print(key[2],key[3])
