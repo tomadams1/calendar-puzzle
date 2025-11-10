@@ -3,25 +3,36 @@ from classes import Point, Block
 from transformations import unique_block_transformations
 from matplotlib import pyplot as plt
 
-# grid_x = 3
-# grid_y = 2
+# grid_x = 5
+# grid_y = 5
 
 # blocks = {
-#     'corner':{(0,0),(0,1),(1,0)},
-#     'line':{(0,0),(0,1)},
-#     'dot':{(0,0)}
+#     'tee':{(0,0),(0,-1),(0,-2),(-1,0),(1,0)},
+#     'chunk':{(0,0),(1,0),(2,0),(1,1),(2,1)},
+#     'line':{(0,0),(0,1),(0,2)},
+#     'corner':{(0,0),(1,0),(2,0),(3,0),(3,1),(3,2)},
+#     'curly':{(0,0),(0,1),(0,2),(1,0),(2,0),(2,1)}
 # }
 
-grid_x = 5
-grid_y = 5
+grid_x = 7
+grid_y = 8
 
 blocks = {
-    'tee':{(0,0),(0,-1),(0,-2),(-1,0),(1,0)},
-    'chunk':{(0,0),(1,0),(2,0),(1,1),(2,1)},
-    'line':{(0,0),(0,1),(0,2)},
-    'corner':{(0,0),(1,0),(2,0),(3,0),(3,1),(3,2)},
-    'curly':{(0,0),(0,1),(0,2),(1,0),(2,0),(2,1)}
+    'n':{(0,0),(0,1),(1,1),(2,1),(2,0)},
+    'b':{(0,0),(1,0),(2,0),(1,1),(2,1)},
+    'small_l':{(0,0),(0,1),(1,0),(2,0)},
+    'medium_l':{(0,0),(0,1),(1,0),(2,0),(3,0)},
+    'big_l':{(0,0),(0,1),(0,2),(1,0),(2,0)},
+    'short_z':{(0,0),(0,1),(1,1),(1,2)},
+    'wide_z':{(0,0),(0,1),(1,1),(2,1),(2,2)},
+    'tall_z':{(0,0),(0,1),(0,2),(1,2),(1,3)},
+    't':{(0,0),(0,-1),(0,-2),(-1,0),(1,0)},
+    'line':{(0,0),(0,1),(0,2),(0,3)},
 }
+
+avoid_squares = {(0,0),(1,0),(2,0),(3,0),(6,6),(6,7),
+                 (5,1),(3,4),(4,6)
+                 }
 
 blocks = {name:Block(Point(p) for p in points) for name,points in blocks.items()}
 transformations = {name:unique_block_transformations(block) for name,block in blocks.items()}
@@ -43,7 +54,10 @@ all_squares = {}
 for x in range(grid_x):
     for y in range(grid_y):
         all_squares[(x,y)] = model.new_int_var(0, len(transformations), f'{x}_{y}')
-        model.add(all_squares[(x,y)] == 1)
+        if (x,y) in avoid_squares:
+            model.add(all_squares[(x,y)] == 0)
+        else:
+            model.add(all_squares[(x,y)] == 1)
 
 # Each block can only have one position and transformation
 for block_name in transformations:
@@ -102,10 +116,20 @@ for block in blocks:
 
 print(output)
 
-colors = {'tee':'red','chunk':'green','line':'blue','corner':'purple','curly':'cornflowerblue'}
-
+colors = {
+    'n':'green',
+    'b':'black',
+    'small_l':'yellow',
+    'medium_l':'orange',
+    'big_l':'red',
+    'short_z':'cornflowerblue',
+    'wide_z':'blue',
+    'tall_z':'darkblue',
+    't':'purple',
+    'line':'hotpink',
+}
 fig, ax = plt.subplots()
-fig.set_size_inches(12,8)
+fig.set_size_inches(8,8)
 ax.set_xlim(0, grid_x)
 ax.set_ylim(0, grid_y)
 
