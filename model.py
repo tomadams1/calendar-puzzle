@@ -2,52 +2,27 @@ from ortools.sat.python import cp_model
 from classes import Point, Block
 from transformations import unique_block_transformations
 from matplotlib import pyplot as plt
+from build_inputs import Input
 
-# grid_x = 5
-# grid_y = 5
-
-# blocks = {
-#     'tee':{(0,0),(0,-1),(0,-2),(-1,0),(1,0)},
-#     'chunk':{(0,0),(1,0),(2,0),(1,1),(2,1)},
-#     'line':{(0,0),(0,1),(0,2)},
-#     'corner':{(0,0),(1,0),(2,0),(3,0),(3,1),(3,2)},
-#     'curly':{(0,0),(0,1),(0,2),(1,0),(2,0),(2,1)}
-# }
-
-grid_x = 7
-grid_y = 8
-
-blocks = {
-    'n':{(0,0),(0,1),(1,1),(2,1),(2,0)},
-    'b':{(0,0),(1,0),(2,0),(1,1),(2,1)},
-    'small_l':{(0,0),(0,1),(1,0),(2,0)},
-    'medium_l':{(0,0),(0,1),(1,0),(2,0),(3,0)},
-    'big_l':{(0,0),(0,1),(0,2),(1,0),(2,0)},
-    'short_z':{(0,0),(0,1),(1,1),(1,2)},
-    'wide_z':{(0,0),(0,1),(1,1),(2,1),(2,2)},
-    'tall_z':{(0,0),(0,1),(0,2),(1,2),(1,3)},
-    't':{(0,0),(0,-1),(0,-2),(-1,0),(1,0)},
-    'line':{(0,0),(0,1),(0,2),(0,3)},
-}
-
-avoid_squares = {(0,0),(1,0),(2,0),(3,0),(6,6),(6,7),
-                 (5,1),(3,4),(4,6)
-                 }
-
-blocks = {name:Block(Point(p) for p in points) for name,points in blocks.items()}
-transformations = {name:unique_block_transformations(block) for name,block in blocks.items()}
+inputs = Input('grid.json','blocks.json')
 
 model = cp_model.CpModel()
 
 all_blocks = {}
 
-# all_blocks is a dictionary of whether we have a block in a certain position / transformation
-for b, list_of_transforms in transformations.items():
-    for t,_ in enumerate(list_of_transforms):
-        for x in range(grid_x):
-            for y in range(grid_y):
+def initialise_block_bools(blocks, grid_x, grid_y) -> dict:
 
-                all_blocks[(b,t,x,y)] = model.new_bool_var(f'{b}_{t}_{x}_{y}')
+    block_bools = dict()
+
+    for block_name, clusters in blocks.items():
+        for cluster_id,_ in enumerate(clusters):
+            for x_pos in range(grid_x):
+                for y_pos in range(grid_y):
+                    all_blocks[(block_name,cluster_id,x_pos,y_pos)] = (
+                        model.new_bool_var(f'{block_name}_{cluster_id}_{x_pos}_{y_pos}')
+                    )
+
+    return block_bools
 
 # all_squares is an int showing the number of blocks that are on that square
 all_squares = {}

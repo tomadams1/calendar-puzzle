@@ -1,7 +1,7 @@
 from ortools.sat.python import cp_model
 import numpy as np
 
-from classes import Point, Block
+from classes import Point, Cluster
 
 grid_size = 3
 
@@ -26,40 +26,34 @@ def transform_point(point: Point,
 
     return new_point
 
-def transform_block(block: Block, 
+def transform_cluster(cluster: Cluster, 
                   rotation: int, 
-                  flipped=False) -> Block:
+                  flipped=False) -> Cluster:
     """Takes a block, and rotates it 'rotation' quarters anti-clockwise around the origin.
     Also flips the block horizontally if flipped is True.
     """
 
-    new_block = Block({transform_point(point, rotation, flipped) for point in block.points})
-    return new_block
+    new_cluster = Cluster({transform_point(point, rotation, flipped) for point in cluster.points})
+    return new_cluster
 
-def centre_block(block: Block) -> Block:
+def centre_cluster(cluster: Cluster) -> Cluster:
 
-    min_x = min([point.x for point in block.points])
-    min_y = min([point.y for point in block.points])
+    min_x = min([point.x for point in cluster.points])
+    min_y = min([point.y for point in cluster.points])
 
-    new_block = Block([Point((point.x-min_x, point.y-min_y)) for point in block.points])
-    return new_block
+    new_cluster = Cluster([Point((point.x-min_x, point.y-min_y)) for point in cluster.points])
+    return new_cluster
 
-def unique_block_transformations(block: Block) -> list[Block]:
+def unique_cluster_orientations(cluster: Cluster) -> list[Cluster]:
 
-    unique_transformations = set()
+    unique_orientations = set()
 
     for flipped in [True,False]:
         for rotation in range(4):
-            new_block = transform_block(block, rotation, flipped)
-            new_block = centre_block(new_block)
-            unique_transformations.add(new_block)
+            new_cluster = transform_cluster(cluster, rotation, flipped)
+            new_cluster = centre_cluster(new_cluster)
+            unique_orientations.add(new_cluster)
 
-    unique_transformations = list(unique_transformations)
+    unique_orientations = list(unique_orientations)
 
-    return unique_transformations
-
-co_ords = [(0,0),(1,0),(0,1),(1,1)]
-block = Block([Point(p) for p in co_ords])
-all_blocks = unique_block_transformations(block)
-for a in all_blocks:
-    print(a)
+    return unique_orientations

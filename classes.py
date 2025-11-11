@@ -1,7 +1,7 @@
 class Point:
     "A tuple of and x and y co-ordinate."
 
-    def __init__(self, co_ord: tuple[int,int]):
+    def __init__(self, co_ord: tuple[int,int] | list[int,int]):
 
         self.x = co_ord[0]
         self.y = co_ord[1]
@@ -16,7 +16,7 @@ class Point:
         return hash((self.x,self.y))
 
 
-class Block:
+class Cluster:
     "A frozen set of several points."
 
     def __init__(self, points: set[Point]):
@@ -25,8 +25,7 @@ class Block:
 
     def __repr__(self):
 
-        sorted_points = sorted(self.points, key=lambda p: (p.x,p.y))
-        list_of_points = [str(point) for point in sorted_points]
+        list_of_points = [str(point) for point in self.points]
 
         return f"[{','.join(list_of_points)}]"
 
