@@ -1,6 +1,7 @@
 from classes import Point, Cluster
 from transformations import unique_cluster_orientations
 import json
+from ortools.sat.python.cp_model import CpModel
 
 def load_grid_json(grid_file: str):
 
@@ -34,7 +35,7 @@ def get_block_clusters(block_json) -> dict[str,list[Cluster]]:
 
     return block_clusters
 
-class Input:
+class Config:
 
     def __init__(self, grid_file, block_file):
         
