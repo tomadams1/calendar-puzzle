@@ -1,9 +1,11 @@
 from ortools.sat.python import cp_model
 from classes import Point, Cluster
 from matplotlib import pyplot as plt
-from build_config import Config
+from build_config import Config, Orientation
 
-def create_block_bools(model: cp_model.CpModel, config: Config) -> dict:
+def create_block_bools(model: cp_model.CpModel, 
+                       config: Config
+                       ) -> dict[Orientation,cp_model.IntVar]:
 
     block_bools = dict()
 
@@ -11,13 +13,17 @@ def create_block_bools(model: cp_model.CpModel, config: Config) -> dict:
         for cluster_id,_ in enumerate(clusters):
             for x_pos in range(config.grid_x):
                 for y_pos in range(config.grid_y):
-                    block_bools[(block_name,cluster_id,x_pos,y_pos)] = (
-                        model.new_bool_var(f'{block_name}_{cluster_id}_{x_pos}_{y_pos}')
+                    orientation = Orientation(block_name, cluster_id, x_pos, y_pos)
+                    block_bools[orientation] = (
+                        model.new_bool_var(f'{orientation}')
                     )
 
     return block_bools
 
-def set_block_conditions(model: cp_model.CpModel, config: Config, block_bools: dict):
+def set_block_conditions(model: cp_model.CpModel, 
+                         config: Config, 
+                         block_bools: dict[Orientation,cp_model.IntVar]
+                         ) -> cp_model.CpModel:
 
     for block_name in config.block_clusters:
 
@@ -26,29 +32,40 @@ def set_block_conditions(model: cp_model.CpModel, config: Config, block_bools: d
 
     return model
 
-def create_square_ints(model: cp_model.CpModel, config: Config) -> dict:
+def create_square_ints(model: cp_model.CpModel, 
+                       config: Config
+                       ) -> dict[Point,cp_model.IntVar]:
 
     square_ints = dict()
 
     for x in range(config.grid_x):
         for y in range(config.grid_y):
-            square_ints[(x,y)] = model.new_int_var(0, len(config.block_clusters), f'{x}_{y}')
+            square_point = Point((x,y))
+            square_ints[square_point] = model.new_int_var(0, len(config.block_clusters), f'{square_point}')
 
     return square_ints
 
-def set_square_conditions(model: cp_model.CpModel, config: Config, square_ints: dict) -> cp_model.CpModel:       
+def set_square_conditions(model: cp_model.CpModel, 
+                          config: Config, 
+                          square_ints: dict[Point,cp_model.IntVar]
+                          ) -> cp_model.CpModel:       
     
     for x in range(config.grid_x):
         for y in range(config.grid_y):
-
-            if Point((x,y)) in config.grid_exclusions:
-                model.add(square_ints[(x,y)] == 0)
+            
+            point = Point((x,y))
+            if point in config.grid_exclusions:
+                model.add(square_ints[point] == 0)
             else:
-                model.add(square_ints[(x,y)] == 1)
+                model.add(square_ints[point] == 1)
 
     return model
 
-def set_touching_conditions(model: cp_model.CpModel, config: Config, block_bools, square_ints):
+def set_touching_conditions(model: cp_model.CpModel, 
+                            config: Config, 
+                            block_bools: dict[Orientation,cp_model.IntVar], 
+                            square_ints: dict[Point,cp_model.IntVar]
+                            ):
 
     # Each square has the value of the number of blocks that are lying on it
     for sq_x in range(config.grid_x):
@@ -73,7 +90,11 @@ def set_touching_conditions(model: cp_model.CpModel, config: Config, block_bools
 
     return model
 
-def model_setup(model: cp_model.CpModel, config: Config, block_bools, square_ints):
+def model_setup(model: cp_model.CpModel, 
+                config: Config, 
+                block_bools: dict[Orientation,cp_model.IntVar], 
+                square_ints: dict[Point,cp_model.IntVar]
+                ):
 
     model = set_block_conditions(model, config, block_bools)
     model = set_square_conditions(model, config, square_ints)
@@ -94,7 +115,7 @@ class AllSolutionsCollector(cp_model.CpSolverSolutionCallback):
     def OnSolutionCallback(self):
         self._count += 1
         sol = {var_name: self.Value(var_value) for var_name, var_value in self.vars.items()}
-        sol = {var_name: var_value for var_name,var_value in sol.items() if var_value == 1}
+        sol = [var_name for var_name,var_value in sol.items() if var_value == 1]
         self.solutions.append(sol)
 
         # optional: stop if we reached a user limit
@@ -104,7 +125,7 @@ class AllSolutionsCollector(cp_model.CpSolverSolutionCallback):
     def solution_count(self):
         return self._count
 
-def solve(model, config):
+def solve(model: cp_model.CpModel, config: Config) -> list[list[tuple]]:
 
     block_bools = create_block_bools(model, config)
     square_ints = create_square_ints(model, config)
@@ -118,7 +139,24 @@ def solve(model, config):
 
     return solutions
 
-def print_solution(solution)
+block_bools
+
+def convert_to_cluster(solution: list[tuple], config: Config) -> dict[str,Cluster]
+
+    final_points = {}
+        
+        for p in config.block_clusters[solution[1]].points:
+
+                new_x = key[2] + p.x
+                new_y = key[3] + p.y
+
+                final_points.append(Point((new_x, new_y)))
+
+def print_solution(solution: list[tuple], config: Config):
+
+
+
+
 
 model = cp_model.CpModel()
 config = Config('grid.json','blocks.json')
@@ -131,28 +169,28 @@ print(bb)
 
 
 
-# for block in blocks:
+for block in blocks:
 
-#     all_matches = {key:value for key,value in all_blocks.items() if (key[0] == block)}
+    all_matches = {key:value for key,value in all_blocks.items() if (key[0] == block)}
 
-#     for key,value in all_matches.items():
+    for key,value in all_matches.items():
 
-#         if solver.boolean_value(value):
+        if solver.boolean_value(value):
 
-#             # print(f'Place {block} at position ({key[2]},{key[3]})')
-#             # print(transformations[block][key[1]])
+            # print(f'Place {block} at position ({key[2]},{key[3]})')
+            # print(transformations[block][key[1]])
             
-#             final_points = []
-#             for p in transformations[block][key[1]].points:
+            final_points = []
+            for p in transformations[block][key[1]].points:
 
-#                 new_x = key[2] + p.x
-#                 new_y = key[3] + p.y
+                new_x = key[2] + p.x
+                new_y = key[3] + p.y
 
-#                 final_points.append(Point((new_x, new_y)))
+                final_points.append(Point((new_x, new_y)))
 
-#             output[block] = Block(final_points)
+            output[block] = Block(final_points)
 
-# print(output)
+print(output)
 
 # colors = {
 #     'n':'green',

@@ -47,9 +47,24 @@ class Config:
         block_json = load_block_json(block_file)
         self.block_clusters = get_block_clusters(block_json)
 
+class Orientation:
+
+    def __init__(self, block_name, cluster_id, x_pos, y_pos):
+
+        self.block_name = block_name
+        self.cluster_id = cluster_id
+        self.x_pos = x_pos
+        self.y_pos = y_pos
+
+    def __repr__(self):
+
+        return f"{self.block_name}_{self.cluster_id}_{self.x}_({self.y})"
+
 class Beans:
 
     def __init__(self, model, block_bools):
 
         self.model = model
         self.block_bools = block_bools
+
+    
