@@ -104,17 +104,19 @@ def model_setup(model: cp_model.CpModel,
 
 class AllSolutionsCollector(cp_model.CpSolverSolutionCallback):
     
-    def __init__(self, variable_dict, limit=None):
+    def __init__(self, 
+                 block_bools: dict[Orientation,cp_model.IntVar], 
+                 limit: int = None):
 
         cp_model.CpSolverSolutionCallback.__init__(self)
-        self.vars = variable_dict
+        self.block_bools = block_bools
         self.limit = limit  # optional max number of solutions to collect
         self.solutions = []  # list of dicts
         self._count = 0
 
     def OnSolutionCallback(self):
         self._count += 1
-        sol = {var_name: self.Value(var_value) for var_name, var_value in self.vars.items()}
+        sol = {var_name: self.Value(var_value) for var_name, var_value in self.block_bools.items()}
         sol = [var_name for var_name,var_value in sol.items() if var_value == 1]
         self.solutions.append(sol)
 
@@ -124,6 +126,19 @@ class AllSolutionsCollector(cp_model.CpSolverSolutionCallback):
 
     def solution_count(self):
         return self._count
+    
+def convert_back_to_cluster(orientation: Orientation, config: Config) -> Cluster:
+
+    points = list()
+
+    for p in config.block_clusters[orientation.cluster_id].points:
+
+        new_x = orientation + p.x
+        new_y = orientation + p.y
+        points.append(Point((new_x, new_y)))
+
+    cluster = Cluster(points)
+    return cluster
 
 def solve(model: cp_model.CpModel, config: Config) -> list[list[tuple]]:
 
@@ -135,11 +150,11 @@ def solve(model: cp_model.CpModel, config: Config) -> list[list[tuple]]:
     collector = AllSolutionsCollector(block_bools, limit=5)
     solver.SearchForAllSolutions(model, collector)
 
+
+
     solutions = collector.solutions
 
     return solutions
-
-block_bools
 
 def convert_to_cluster(solution: list[tuple], config: Config) -> dict[str,Cluster]
 
