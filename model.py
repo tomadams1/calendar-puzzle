@@ -127,7 +127,7 @@ class AllSolutionsCollector(cp_model.CpSolverSolutionCallback):
     def solution_count(self):
         return self._count
     
-def convert_back_to_cluster(orientation: Orientation, config: Config) -> Cluster:
+def convert_to_cluster(orientation: Orientation, config: Config) -> Cluster:
 
     points = list()
 
@@ -139,6 +139,13 @@ def convert_back_to_cluster(orientation: Orientation, config: Config) -> Cluster
 
     cluster = Cluster(points)
     return cluster
+
+def convert_all_to_cluster(orientations: 
+                                list[Orientation], 
+                                config:Config
+                                ) -> dict[str,Cluster]:
+
+    all_clusters = {o.block_name: convert_to_cluster(o) for o in orientations}
 
 def solve(model: cp_model.CpModel, config: Config) -> list[list[tuple]]:
 
