@@ -46,3 +46,10 @@ class Config:
 
         block_json = load_block_json(block_file)
         self.block_clusters = get_block_clusters(block_json)
+
+class Beans:
+
+    def __init__(self, model, block_bools):
+
+        self.model = model
+        self.block_bools = block_bools

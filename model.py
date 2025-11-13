@@ -1,9 +1,9 @@
-from ortools.sat.python.cp_model import CpModel
+from ortools.sat.python import cp_model
 from classes import Point, Cluster
 from matplotlib import pyplot as plt
 from build_config import Config
 
-def create_block_bools(model: CpModel, config: Config) -> dict:
+def create_block_bools(model: cp_model.CpModel, config: Config) -> dict:
 
     block_bools = dict()
 
@@ -17,17 +17,16 @@ def create_block_bools(model: CpModel, config: Config) -> dict:
 
     return block_bools
 
-def set_block_conditions(model: CpModel, config: Config, block_bools: dict):
+def set_block_conditions(model: cp_model.CpModel, config: Config, block_bools: dict):
 
     for block_name in config.block_clusters:
 
         block_choices = [value for key,value in block_bools.items() if key[0] == block_name]
-        print(block_choices)
         model.add_exactly_one(block_choices)
 
     return model
 
-def create_square_ints(model, config: Config) -> dict:
+def create_square_ints(model: cp_model.CpModel, config: Config) -> dict:
 
     square_ints = dict()
 
@@ -37,7 +36,7 @@ def create_square_ints(model, config: Config) -> dict:
 
     return square_ints
 
-def set_square_conditions(model: CpModel, config: Config, square_ints: dict) -> CpModel:       
+def set_square_conditions(model: cp_model.CpModel, config: Config, square_ints: dict) -> cp_model.CpModel:       
     
     for x in range(config.grid_x):
         for y in range(config.grid_y):
@@ -49,7 +48,7 @@ def set_square_conditions(model: CpModel, config: Config, square_ints: dict) -> 
 
     return model
 
-def set_touching_conditions(model: CpModel, config: Config, block_bools, square_ints):
+def set_touching_conditions(model: cp_model.CpModel, config: Config, block_bools, square_ints):
 
     # Each square has the value of the number of blocks that are lying on it
     for sq_x in range(config.grid_x):
@@ -74,11 +73,7 @@ def set_touching_conditions(model: CpModel, config: Config, block_bools, square_
 
     return model
 
-def model_setup(model: CpModel, config: Config):
-
-    block_bools = create_block_bools(model, config)
-    print(block_bools)
-    square_ints = create_square_ints(model, config)
+def model_setup(model: cp_model.CpModel, config: Config, block_bools, square_ints):
 
     model = set_block_conditions(model, config, block_bools)
     model = set_square_conditions(model, config, square_ints)
@@ -86,15 +81,55 @@ def model_setup(model: CpModel, config: Config):
 
     return model
 
+class AllSolutionsCollector(cp_model.CpSolverSolutionCallback):
+    
+    def __init__(self, variable_dict, limit=None):
+
+        cp_model.CpSolverSolutionCallback.__init__(self)
+        self.vars = variable_dict
+        self.limit = limit  # optional max number of solutions to collect
+        self.solutions = []  # list of dicts
+        self._count = 0
+
+    def OnSolutionCallback(self):
+        self._count += 1
+        sol = {var_name: self.Value(var_value) for var_name, var_value in self.vars.items()}
+        sol = {var_name: var_value for var_name,var_value in sol.items() if var_value == 1}
+        self.solutions.append(sol)
+
+        # optional: stop if we reached a user limit
+        if self.limit is not None and self._count >= self.limit:
+            self.StopSearch()
+
+    def solution_count(self):
+        return self._count
+
+def solve(model, config):
+
+    block_bools = create_block_bools(model, config)
+    square_ints = create_square_ints(model, config)
+    model = model_setup(model,config,block_bools,square_ints)
+
+    solver = cp_model.CpSolver()
+    collector = AllSolutionsCollector(block_bools, limit=5)
+    solver.SearchForAllSolutions(model, collector)
+
+    solutions = collector.solutions
+
+    return solutions
+
+def print_solution(solution)
+
+model = cp_model.CpModel()
 config = Config('grid.json','blocks.json')
-model = CpModel()
-model = model_setup(model, config)
+bb = solve(model,config)
+print(bb)
 
-solver = model.CpSolver()
-solution_printer = model.ObjectiveSolutionPrinter()
-status = solver.solve(model, solution_printer)
+    
 
-output = dict()
+
+
+
 
 # for block in blocks:
 
