@@ -159,7 +159,7 @@ def solve(model: cp_model.CpModel, config: Config) -> list[dict[str,Cluster]]:
     model = model_setup(model,config,block_bools,square_ints)
 
     solver = cp_model.CpSolver()
-    collector = AllSolutionsCollector(block_bools, limit=100)
+    collector = AllSolutionsCollector(block_bools, limit=None)
     solver.SearchForAllSolutions(model, collector)
 
     solutions = [convert_all_to_cluster(sol, config) for sol in collector.solutions]
@@ -208,8 +208,9 @@ config = Config('grid.json','blocks.json')
 solutions = solve(model,config)
 plot_all(solutions, config, cmap, 'first_test')
 
+import os
 import imageio
 images = []
 for filename in os.listdir('first_test'):
-    images.append(imageio.imread(filename))
+    images.append(imageio.imread(f'first_test/{filename}'))
 imageio.mimsave('movie.gif', images)
