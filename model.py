@@ -2,6 +2,7 @@ from ortools.sat.python import cp_model
 from classes import Point, Cluster
 from matplotlib import pyplot as plt
 from build_config import Config, Orientation
+import os
 
 def create_block_bools(model: cp_model.CpModel, 
                        config: Config
@@ -134,10 +135,10 @@ def convert_to_cluster(orientation: Orientation, config: Config) -> Cluster:
 
     points = list()
 
-    for p in config.block_clusters[orientation.cluster_id].points:
+    for p in config.block_clusters[orientation.block_name][orientation.cluster_id].points:
 
-        new_x = orientation + p.x
-        new_y = orientation + p.y
+        new_x = orientation.x_pos + p.x
+        new_y = orientation.y_pos + p.y
         points.append(Point((new_x, new_y)))
 
     cluster = Cluster(points)
@@ -154,45 +155,61 @@ def convert_all_to_cluster(orientations: list[Orientation],
 def solve(model: cp_model.CpModel, config: Config) -> list[dict[str,Cluster]]:
 
     block_bools = create_block_bools(model, config)
-    print(block_bools)
     square_ints = create_square_ints(model, config)
     model = model_setup(model,config,block_bools,square_ints)
 
     solver = cp_model.CpSolver()
-    collector = AllSolutionsCollector(block_bools, limit=5)
+    collector = AllSolutionsCollector(block_bools, limit=100)
     solver.SearchForAllSolutions(model, collector)
 
     solutions = [convert_all_to_cluster(sol, config) for sol in collector.solutions]
 
     return solutions
 
+cmap = {
+    'n':'green',
+    'b':'black',
+    'small_l':'yellow',
+    'medium_l':'orange',
+    'big_l':'red',
+    'short_z':'cornflowerblue',
+    'wide_z':'blue',
+    'tall_z':'darkblue',
+    't':'purple',
+    'line':'hotpink',
+}
+
+def plot_solution(solution: dict[str,Cluster], config:Config, cmap: dict[str,str], file_name):
+
+    fig, ax = plt.subplots()
+    fig.set_size_inches(8,8)
+    ax.set_xlim(0, config.grid_x)
+    ax.set_ylim(0, config.grid_y)
+
+    for block_name,cluster in solution.items():
+
+        for point in cluster.points:
+
+            ax.fill_between([point.x, point.x+1], [point.y, point.y], [point.y+1, point.y+1], color=cmap[block_name])
+
+    plt.savefig(file_name)
+    plt.close()
+
+def plot_all(list_of_solutions, config, cmap, folder):
+
+    os.mkdir(folder)
+
+    for i,solution in enumerate(list_of_solutions):
+        print(f'Plotting solution {i}')
+        plot_solution(solution, config, cmap, f'{folder}/solution_{i}.png')
+
 model = cp_model.CpModel()
 config = Config('grid.json','blocks.json')
-bb = solve(model,config)
-print(bb)
+solutions = solve(model,config)
+plot_all(solutions, config, cmap, 'first_test')
 
-
-# colors = {
-#     'n':'green',
-#     'b':'black',
-#     'small_l':'yellow',
-#     'medium_l':'orange',
-#     'big_l':'red',
-#     'short_z':'cornflowerblue',
-#     'wide_z':'blue',
-#     'tall_z':'darkblue',
-#     't':'purple',
-#     'line':'hotpink',
-# }
-# fig, ax = plt.subplots()
-# fig.set_size_inches(8,8)
-# ax.set_xlim(0, grid_x)
-# ax.set_ylim(0, grid_y)
-
-# for block_name,block in output.items():
-
-#     for point in block.points:
-
-#         ax.fill_between([point.x, point.x+1], [point.y, point.y], [point.y+1, point.y+1], color=colors[block_name])
-
-# plt.savefig('foo.png')
+import imageio
+images = []
+for filename in os.listdir('first_test'):
+    images.append(imageio.imread(filename))
+imageio.mimsave('movie.gif', images)
