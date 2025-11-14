@@ -27,7 +27,7 @@ def set_block_conditions(model: cp_model.CpModel,
 
     for block_name in config.block_clusters:
 
-        block_choices = [value for key,value in block_bools.items() if key[0] == block_name]
+        block_choices = [value for key,value in block_bools.items() if key.block_name == block_name]
         model.add_exactly_one(block_choices)
 
     return model
@@ -71,6 +71,8 @@ def set_touching_conditions(model: cp_model.CpModel,
     for sq_x in range(config.grid_x):
         for sq_y in range(config.grid_y):
 
+            point = Point((sq_x,sq_y))
+
             pointing_at_square = list()
 
             for block_name, clusters in config.block_clusters.items():
@@ -78,15 +80,16 @@ def set_touching_conditions(model: cp_model.CpModel,
                     for x in range(config.grid_x):
                         for y in range(config.grid_y):
                             for p in cluster.points:
-
+                                
                                 fx = x + p.x
                                 fy = y + p.y
 
                                 if (fx==sq_x) & (fy==sq_y):
+                                    
+                                    orientation = Orientation(block_name,cluster_id,x,y)
+                                    pointing_at_square.append(block_bools[orientation])
 
-                                    pointing_at_square.append(block_bools[(block_name,cluster_id,x,y)])
-
-            model.add(square_ints[sq_x,sq_y] == sum(pointing_at_square))
+            model.add(square_ints[point] == sum(pointing_at_square))
 
     return model
 
@@ -140,16 +143,18 @@ def convert_to_cluster(orientation: Orientation, config: Config) -> Cluster:
     cluster = Cluster(points)
     return cluster
 
-def convert_all_to_cluster(orientations: 
-                                list[Orientation], 
-                                config:Config
-                                ) -> dict[str,Cluster]:
+def convert_all_to_cluster(orientations: list[Orientation], 
+                           config:Config
+                           ) -> dict[str,Cluster]:
 
-    all_clusters = {o.block_name: convert_to_cluster(o) for o in orientations}
+    all_clusters = {o.block_name: convert_to_cluster(o,config) for o in orientations}
 
-def solve(model: cp_model.CpModel, config: Config) -> list[list[tuple]]:
+    return all_clusters
+
+def solve(model: cp_model.CpModel, config: Config) -> list[dict[str,Cluster]]:
 
     block_bools = create_block_bools(model, config)
+    print(block_bools)
     square_ints = create_square_ints(model, config)
     model = model_setup(model,config,block_bools,square_ints)
 
@@ -157,62 +162,15 @@ def solve(model: cp_model.CpModel, config: Config) -> list[list[tuple]]:
     collector = AllSolutionsCollector(block_bools, limit=5)
     solver.SearchForAllSolutions(model, collector)
 
-
-
-    solutions = collector.solutions
+    solutions = [convert_all_to_cluster(sol, config) for sol in collector.solutions]
 
     return solutions
-
-def convert_to_cluster(solution: list[tuple], config: Config) -> dict[str,Cluster]
-
-    final_points = {}
-        
-        for p in config.block_clusters[solution[1]].points:
-
-                new_x = key[2] + p.x
-                new_y = key[3] + p.y
-
-                final_points.append(Point((new_x, new_y)))
-
-def print_solution(solution: list[tuple], config: Config):
-
-
-
-
 
 model = cp_model.CpModel()
 config = Config('grid.json','blocks.json')
 bb = solve(model,config)
 print(bb)
 
-    
-
-
-
-
-
-for block in blocks:
-
-    all_matches = {key:value for key,value in all_blocks.items() if (key[0] == block)}
-
-    for key,value in all_matches.items():
-
-        if solver.boolean_value(value):
-
-            # print(f'Place {block} at position ({key[2]},{key[3]})')
-            # print(transformations[block][key[1]])
-            
-            final_points = []
-            for p in transformations[block][key[1]].points:
-
-                new_x = key[2] + p.x
-                new_y = key[3] + p.y
-
-                final_points.append(Point((new_x, new_y)))
-
-            output[block] = Block(final_points)
-
-print(output)
 
 # colors = {
 #     'n':'green',

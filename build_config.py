@@ -58,7 +58,14 @@ class Orientation:
 
     def __repr__(self):
 
-        return f"{self.block_name}_{self.cluster_id}_{self.x}_({self.y})"
+        return f"{self.block_name}_{self.cluster_id}_{self.x_pos}_{self.y_pos}"
+    
+    def __eq__(self,other):
+
+        return (self.block_name==other.block_name) and (self.cluster_id==other.cluster_id) and (self.x_pos==other.x_pos) and (self.y_pos == other.y_pos)
+    
+    def __hash__(self):
+        return hash((self.block_name,self.cluster_id,self.x_pos,self.y_pos))
 
 class Beans:
 
